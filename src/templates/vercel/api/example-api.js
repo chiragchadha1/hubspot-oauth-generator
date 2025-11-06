@@ -1,0 +1,66 @@
+export function exampleApiTemplate(config) {
+  const includeSignatureValidation = config.features.includes('signature-validation');
+
+  const signatureImport = includeSignatureValidation
+    ? "import { validateHubSpotSignature } from '../lib/hubspot-signature.js';\n"
+    : '';
+
+  const signatureValidation = includeSignatureValidation ? `
+    // Validate HubSpot signature (optional but recommended for production)
+    const requireSignature = process.env.REQUIRE_HUBSPOT_SIGNATURE !== 'false';
+
+    if (requireSignature) {
+      const isValid = await validateHubSpotSignature(req);
+      if (!isValid) {
+        return res.status(401).json({
+          error: 'Invalid or missing HubSpot signature'
+        });
+      }
+    }
+` : '';
+
+  return `import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { HubSpotClient } from '../lib/hubspot-client.js';
+${signatureImport}
+/**
+ * Example API Endpoint
+ *
+ * Demonstrates how to make authenticated HubSpot API calls.
+ * Automatically handles token refresh if needed.
+ * ${includeSignatureValidation ? 'Validates HubSpot request signatures for security.' : ''}
+ *
+ * Usage: GET /api/example-api?portal_id=12345
+ */
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const portal_id = parseInt(req.query.portal_id as string);
+
+    if (!portal_id || isNaN(portal_id)) {
+      return res.status(400).json({
+        error: 'Valid portal_id is required'
+      });
+    }
+${signatureValidation}
+    // Create HubSpot client
+    const hubspot = new HubSpotClient({ portalId: portal_id });
+
+    // Example: Get contacts
+    const contacts = await hubspot.get('/crm/v3/objects/contacts?limit=10');
+
+    res.status(200).json({
+      success: true,
+      portal_id,
+      data: contacts,
+    });
+
+  } catch (error) {
+    console.error('API error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: (error as Error).message
+    });
+  }
+}
+`;
+}

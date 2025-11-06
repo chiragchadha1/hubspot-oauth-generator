@@ -1,0 +1,16 @@
+# Development files
+src/
+tsconfig.json
+.git/
+.gitignore
+
+# Test files
+test-output/
+
+# Documentation
+*.md
+!README.md
+
+# OS files
+.DS_Store
+
