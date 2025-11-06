@@ -6,7 +6,9 @@ export function exampleApiTemplate(config) {
     : '';
 
   const signatureValidation = includeSignatureValidation ? `
-    // Validate HubSpot signature (optional but recommended for production)
+    // Validate HubSpot signature (recommended for production)
+    // hubspot.fetch() from cards sends v3 signatures
+    // Set REQUIRE_HUBSPOT_SIGNATURE=false to disable for testing
     const requireSignature = process.env.REQUIRE_HUBSPOT_SIGNATURE !== 'false';
 
     if (requireSignature) {
@@ -29,28 +31,28 @@ ${signatureImport}
  * Automatically handles token refresh if needed.
  * ${includeSignatureValidation ? 'Validates HubSpot request signatures for security.' : ''}
  *
- * Usage: GET /api/example-api?portal_id=12345
+ * Usage: GET /api/example-api?portalId=12345
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const portal_id = parseInt(req.query.portal_id as string);
+    const portalId = parseInt(req.query.portalId as string);
 
-    if (!portal_id || isNaN(portal_id)) {
+    if (!portalId || isNaN(portalId)) {
       return res.status(400).json({
-        error: 'Valid portal_id is required'
+        error: 'Valid portalId is required'
       });
     }
 ${signatureValidation}
     // Create HubSpot client
-    const hubspot = new HubSpotClient({ portalId: portal_id });
+    const hubspot = new HubSpotClient({ portalId });
 
     // Example: Get contacts
     const contacts = await hubspot.get('/crm/v3/objects/contacts?limit=10');
 
     res.status(200).json({
       success: true,
-      portal_id,
+      portalId,
       data: contacts,
     });
 

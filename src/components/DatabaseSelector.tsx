@@ -11,8 +11,8 @@ interface Props {
 export const DatabaseSelector: React.FC<Props> = ({ platform, onSelect }) => {
   const items = platform === 'vercel'
     ? [
-        { label: '🟢 Supabase PostgreSQL (Recommended)', value: 'supabase' },
-        { label: '🔺 Vercel Postgres', value: 'vercel-postgres' },
+        { label: '🔺 Vercel Postgres (Recommended - Easiest Setup)', value: 'vercel-postgres' },
+        { label: '🟢 Supabase (More Generous Free Tier)', value: 'supabase' },
         { label: '🐘 Other PostgreSQL', value: 'postgres' },
       ]
     : [{ label: '⚡ Supabase PostgreSQL (Built-in)', value: 'supabase' }];

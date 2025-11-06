@@ -1,7 +1,5 @@
 export function packageJsonTemplate(config) {
-  const dependencies = {
-    "@supabase/supabase-js": "^2.39.0"
-  };
+  const dependencies = {};
 
   // Always include TypeScript dependencies
   const devDependencies = {
@@ -10,8 +8,11 @@ export function packageJsonTemplate(config) {
     "@types/node": "^20.10.0"
   };
 
+  // Add database-specific dependencies
   if (config.database === 'vercel-postgres') {
     dependencies["@vercel/postgres"] = "^0.5.1";
+  } else if (config.database === 'supabase') {
+    dependencies["@supabase/supabase-js"] = "^2.39.0";
   } else if (config.database === 'postgres') {
     dependencies["pg"] = "^8.11.3";
     devDependencies["@types/pg"] = "^8.10.0";

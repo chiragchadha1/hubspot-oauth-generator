@@ -17,11 +17,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { code, error } = req.query;
 
     if (error) {
-      return res.status(400).send(\`OAuth Error: \${error}\`);
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(400).send(\`<h4>Error: \${error}</h4>\`);
     }
 
     if (!code || typeof code !== 'string') {
-      return res.status(400).send('No authorization code provided');
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(400).send('<h4>Error: No authorization code provided</h4>');
     }
 
     const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
@@ -92,28 +94,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       [portal_id, access_token, refresh_token, expires_at, tokenData.scopes || []]
     );
 
-    const successMessage = \`
-✅ OAuth Installation Successful!
-
-Your HubSpot app has been successfully connected.
-
-Portal ID: \${portal_id}
-Scopes: \${tokenData.scopes ? tokenData.scopes.join(', ') : 'N/A'}
-Status: Tokens securely stored
-
-You can now close this page.
-
----
-
-📖 Next Steps:
-• Test API call: /api/example-api?portal_id=\${portal_id}
-• Read the docs: Check README.md for code examples
-• HubSpot API reference: https://developers.hubspot.com/docs/api/overview
-
-Your tokens are securely stored and will auto-refresh. Happy coding! 🚀
-    \`.trim();
-
-    res.status(200).send(successMessage);
+    // Simple HTML response like the quickstart guide
+    res.setHeader('Content-Type', 'text/html');
+    res.status(200).send(\`
+<h2>OAuth Installation Successful</h2>
+<p>Your HubSpot app has been successfully connected.</p>
+<h4>Portal ID: \${portal_id}</h4>
+<p>Scopes: \${tokenData.scopes ? tokenData.scopes.join(', ') : 'N/A'}</p>
+<p>Status: Tokens securely stored in database</p>
+<p><a href="/api/example-api?portalId=\${portal_id}">Test API call</a></p>
+    \`);
 
   } catch (error) {
     console.error('OAuth callback error:', error);

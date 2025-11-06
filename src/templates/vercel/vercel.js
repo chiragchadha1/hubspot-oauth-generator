@@ -1,16 +1,8 @@
 export function vercelJsonTemplate(config) {
+  // Environment variables should be set in Vercel Dashboard
+  // Settings → Environment Variables (not in vercel.json)
   return JSON.stringify({
-    version: 2,
-    functions: {
-      "api/**/*.js": {
-        runtime: "nodejs20.x"
-      }
-    },
-    env: {
-      HUBSPOT_CLIENT_ID: "@hubspot_client_id",
-      HUBSPOT_CLIENT_SECRET: "@hubspot_client_secret",
-      HUBSPOT_REDIRECT_URI: "@hubspot_redirect_uri"
-    }
+    version: 2
   }, null, 2);
 }
 

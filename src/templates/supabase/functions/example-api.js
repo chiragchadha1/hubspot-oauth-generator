@@ -37,7 +37,7 @@ export function exampleApiTemplate(config) {
  * Automatically handles token refresh if needed.
  * ${includeSignatureValidation ? 'Validates HubSpot request signatures for security.' : ''}
  *
- * Usage: GET /functions/v1/example-api?portal_id=12345
+ * Usage: GET /functions/v1/example-api?portalId=12345
  */
 
 import { HubSpotClient } from '../_shared/hubspot-client.ts';
@@ -55,11 +55,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const url = new URL(req.url);
-    const portal_id = parseInt(url.searchParams.get('portal_id') || '');
+    const portalId = parseInt(url.searchParams.get('portalId') || '');
 
-    if (!portal_id || isNaN(portal_id)) {
+    if (!portalId || isNaN(portalId)) {
       return new Response(
-        JSON.stringify({ error: 'Valid portal_id is required' }),
+        JSON.stringify({ error: 'Valid portalId is required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' }}
       );
     }
@@ -78,7 +78,7 @@ ${signatureValidation}
     const hubspot = new HubSpotClient({
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_SERVICE_ROLE_KEY,
-      portalId: portal_id,
+      portalId,
     });
 
     // Example: Get contacts
@@ -87,7 +87,7 @@ ${signatureValidation}
     return new Response(
       JSON.stringify({
         success: true,
-        portal_id,
+        portalId,
         data: contacts,
       }),
       {

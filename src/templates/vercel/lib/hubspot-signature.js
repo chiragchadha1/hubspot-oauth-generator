@@ -29,12 +29,17 @@ async function validateV3Signature(
     return false;
   }
 
+  // Get the host and reconstruct the full URL
+  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const url = req.url || '';
 
-  // Reconstruct the original URL that HubSpot signed
-  let uri = \`\${protocol}://\${host}\${url}\`;
+  // req.url is just the path (e.g., /api/example-api?portalId=123)
+  // We need to construct the full URL that HubSpot signed
+  const fullUrl = \`\${protocol}://\${host}\${req.url}\`;
+
+  // Parse to normalize
+  const parsedUrl = new URL(fullUrl);
+  let uri = parsedUrl.href;
 
   // Decode specific URL-encoded characters per HubSpot v3 specification
   const decodeMappings: Record<string, string> = {
@@ -68,12 +73,14 @@ async function validateV2Signature(
   clientSecret: string,
   signatureHeader: string
 ): Promise<boolean> {
+  // Get the host and reconstruct the full URL
+  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const url = req.url || '';
 
-  // Reconstruct with https
-  const uri = \`\${protocol}://\${host}\${url}\`;
+  // Construct the full URL that HubSpot signed
+  const fullUrl = \`\${protocol}://\${host}\${req.url}\`;
+  const parsedUrl = new URL(fullUrl);
+  const uri = parsedUrl.href;
   const method = req.method;
 
   // v2: clientSecret + method + uri + body
@@ -117,8 +124,11 @@ export async function validateHubSpotSignature(req: VercelRequest): Promise<bool
   }
 
   // Get request body as string
+  // For GET requests or empty bodies, use empty string
   let body = '';
-  if (req.body) {
+  if (req.body && Object.keys(req.body).length > 0) {
+    // If body is already a string, use it as-is
+    // Otherwise stringify with no spacing to match HubSpot's format
     body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
   }
 
@@ -127,11 +137,10 @@ export async function validateHubSpotSignature(req: VercelRequest): Promise<bool
   const signatureVersion = req.headers['x-hubspot-signature-version'] as string | undefined;
   const signature = req.headers['x-hubspot-signature'] as string | undefined;
 
-  // Try v3 first (latest version)
+  // Try v3 first (latest version - used by hubspot.fetch())
   if (v3Signature && v3Timestamp) {
     const isValid = await validateV3Signature(req, body, clientSecret, v3Signature, v3Timestamp);
     if (isValid) {
-      console.log('Valid HubSpot signature (v3)');
       return true;
     }
   }
@@ -140,7 +149,6 @@ export async function validateHubSpotSignature(req: VercelRequest): Promise<bool
   if (signatureVersion === 'v2' && signature) {
     const isValid = await validateV2Signature(req, body, clientSecret, signature);
     if (isValid) {
-      console.log('Valid HubSpot signature (v2)');
       return true;
     }
   }
@@ -149,12 +157,11 @@ export async function validateHubSpotSignature(req: VercelRequest): Promise<bool
   if (signatureVersion === 'v1' && signature) {
     const isValid = await validateV1Signature(body, clientSecret, signature);
     if (isValid) {
-      console.log('Valid HubSpot signature (v1)');
       return true;
     }
   }
 
-  console.error('Invalid HubSpot signature or no signature found');
+  console.error('Invalid HubSpot signature');
   return false;
 }
 `;
